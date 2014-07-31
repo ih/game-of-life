@@ -1,0 +1,11 @@
+* Idea
+A "life" simulator inspired by Conway's game of life.  Individuals can either move, destroy, or create.  The rules governing what action the individual takes can be unique to each individual.  The create action makes a new individual with possibly new behavior.
+* Implementation
+** Data
+*** agent behavior
+sets of rules that can be combined
+*** position
+*** creation time
+*** id
+** Simulation
+
