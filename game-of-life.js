@@ -1,28 +1,48 @@
+
+function memoize(f) {
+	var memory = {};
+	var memoized = function () {
+		var args = Array.prototype.slice.call(arguments, 0);
+		if (_.has(memory, args)) {
+			return memory[args];
+		}
+		else {
+			var ans = f.apply(this, args);
+			memory[args] = ans;
+			return ans;
+		}
+	};
+	return memoized;
+}
+
+function mod(m, n) {
+    return ((m % n) + n) % n;
+}
+
+// var mod = memoize(mod);
+
 Number.prototype.mod = function(n) {
     return ((this%n)+n)%n;
 };
 
-var SIMULATION_SPEED = 100;
+var SIMULATION_SPEED = 1000;
 
 $(document).ready(function () {
-	var board = createBoard(100, 100);
+	var board = createBoard();
 	drawBoard(board);
 
 	window.setInterval(function () {
 		board = updateBoard(board);
 		drawBoard(board);
-		console.log('iteration');
 	}, SIMULATION_SPEED);
-
-	console.log(board);
 });
 
 function createBoard(height, width) {
 	if (!height) {
-		var height = Math.ceil($('#world').height());
+		height = Math.ceil($('#world').height());
 	}
 	if (!width) {
-		var width = Math.ceil($('#world').width());
+		width = Math.ceil($('#world').width());
 	}
 	var board = make2dArray(height, width);
 
@@ -93,35 +113,35 @@ function updateBoard(board) {
 function countNeighbors(board, x, y) {
 	var neighborCount = 0;
 	// right neighbor
-	if (board[(x + 1).mod(getWidth(board))][y] > 0) {
+	if (board[mod(x + 1, getWidth(board))][y] > 0) {
 		neighborCount += 1;
 	}
 	// right bottom
-	if (board[(x + 1).mod(getWidth(board))][(y - 1).mod(getHeight(board))] > 0) {
+	if (board[mod(x + 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	// bottom
-	if (board[x][(y - 1).mod(getHeight(board))] > 0) {
+	if (board[x][mod(y - 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	// left bottom
-	if (board[(x - 1).mod(getWidth(board))][(y - 1).mod(getHeight(board))] > 0) {
+	if (board[mod(x - 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	// left
-	if (board[(x - 1).mod(getWidth(board))][y] > 0) {
+	if (board[mod(x - 1, getWidth(board))][y] > 0) {
 		neighborCount += 1;
 	}
 	// left top
-	if (board[(x - 1).mod(getWidth(board))][(y + 1).mod(getHeight(board))] > 0) {
+	if (board[mod(x - 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	// top
-	if (board[x][(y + 1).mod(getHeight(board))] > 0) {
+	if (board[x][mod(y + 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	// right top
-	if (board[(x + 1).mod(getWidth(board))][(y + 1).mod(getHeight(board))] > 0) {
+	if (board[mod(x + 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
 		neighborCount += 1;
 	}
 	return neighborCount;
@@ -142,7 +162,6 @@ function drawBoard(board) {
 				canvasContext.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
 			}
 			else {
-				console.log('live cell at ' + j + ' ' + i);
 				canvasContext.fillStyle = 'rgb(0,255,0)';
 				canvasContext.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
 			}
