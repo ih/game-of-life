@@ -1,4 +1,3 @@
-
 function memoize(f) {
 	var memory = {};
 	var memoized = function () {
@@ -19,13 +18,9 @@ function mod(m, n) {
     return ((m % n) + n) % n;
 }
 
-// var mod = memoize(mod);
-
-Number.prototype.mod = function(n) {
-    return ((this%n)+n)%n;
-};
-
 var SIMULATION_SPEED = 1000;
+var X = 0;
+var Y = 1;
 
 $(document).ready(function () {
 	var board = createBoard();
@@ -53,10 +48,8 @@ function make2dArray(height, width) {
 	var grid = _.map(_.range(width), function(column) {
 		return _.map(_.range(height), function (columnCell) {
 			return _.random(0, 1);
-			// return 0;
 		});
 	});
-	// grid = testAcorn(grid);
 	return grid;
 }
 
@@ -71,21 +64,6 @@ function testAcorn(grid) {
 	grid[midWidth + 4][midHeight] = 1;
 	grid[midWidth + 5][midHeight] = 1;
 	grid[midWidth + 6][midHeight] = 1;
-	return grid;
-}
-
-
-function testSimple(grid) {
-	var midWidth = Math.round(getWidth(grid) / 2);
-	var midHeight = Math.round(getHeight(grid) / 2);
-
-	grid[midWidth][midHeight] = 1;
-	// grid[midWidth + 1][midHeight] = 1;
-	// grid[midWidth + 1][midHeight + 2] = 1;
-	// grid[midWidth + 3][midHeight + 1] = 1;
-	// grid[midWidth + 4][midHeight] = 1;
-	// grid[midWidth + 5][midHeight] = 1;
-	// grid[midWidth + 6][midHeight] = 1;
 	return grid;
 }
 
@@ -110,41 +88,70 @@ function updateBoard(board) {
 	return newBoard;
 }
 
+
+var memory = {};
+function getNeighborCoordinates(board, x, y) {
+	if (_.has(memory, [x, y])) {
+		return memory[[x, y]];
+	}
+	else {
+		var leftOfX = x === 0 ? getWidth(board) - 1 : x - 1;
+		var rightOfX = x === getWidth(board) - 1 ? 0 : x + 1;
+		var belowY = y === 0 ? getHeight(board) - 1: y - 1;
+		var aboveY = y === getHeight(board) - 1 ? 0 :  y + 1;
+		var coordinates = [
+			[leftOfX, aboveY], [x, aboveY], [rightOfX, aboveY],
+			[leftOfX, y], [rightOfX, y],
+			[leftOfX, belowY], [x, belowY], [rightOfX, belowY]
+		];
+		memory[[x, y]] = coordinates;
+		return coordinates;
+	}
+}
+
+// getNeighborCoordinates = memoize(getNeighborCoordinates);
+
 function countNeighbors(board, x, y) {
-	var neighborCount = 0;
-	// right neighbor
-	if (board[mod(x + 1, getWidth(board))][y] > 0) {
-		neighborCount += 1;
-	}
-	// right bottom
-	if (board[mod(x + 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	// bottom
-	if (board[x][mod(y - 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	// left bottom
-	if (board[mod(x - 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	// left
-	if (board[mod(x - 1, getWidth(board))][y] > 0) {
-		neighborCount += 1;
-	}
-	// left top
-	if (board[mod(x - 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	// top
-	if (board[x][mod(y + 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	// right top
-	if (board[mod(x + 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
-		neighborCount += 1;
-	}
-	return neighborCount;
+	var neighborPositions = getNeighborCoordinates(board, x, y);
+	var neighborStates = _.map(neighborPositions, function (position) {
+			return board[position[X]][position[Y]];;
+	});
+	return _.reduce(
+		neighborStates, function (memo, num) {return memo + num;}, 0);
+	// var neighborCount = 0;
+	// // right neighbor
+	// if (board[mod(x + 1, getWidth(board))][y] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // right bottom
+	// if (board[mod(x + 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // bottom
+	// if (board[x][mod(y - 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // left bottom
+	// if (board[mod(x - 1, getWidth(board))][mod(y - 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // left
+	// if (board[mod(x - 1, getWidth(board))][y] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // left top
+	// if (board[mod(x - 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // top
+	// if (board[x][mod(y + 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// // right top
+	// if (board[mod(x + 1, getWidth(board))][mod(y + 1, getHeight(board))] > 0) {
+	// 	neighborCount += 1;
+	// }
+	// return neighborCount;
 }
 
 function drawBoard(board) {
@@ -158,12 +165,14 @@ function drawBoard(board) {
 	for (var i = 0; i < getHeight(board); i++) {
 		for (var j = 0; j < getWidth(board); j++) {
 			if (board[j][i] === 0) {
-				canvasContext.fillStyle = 'rgb(255,0,0)';
-				canvasContext.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
+				canvasContext.fillStyle = 'rgb(255,255,255)';
+				canvasContext.fillRect(
+					j * cellWidth, i * cellHeight, cellWidth, cellHeight);
 			}
 			else {
-				canvasContext.fillStyle = 'rgb(0,255,0)';
-				canvasContext.fillRect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
+				canvasContext.fillStyle = 'rgb(0,0,0)';
+				canvasContext.fillRect(
+					j * cellWidth, i * cellHeight, cellWidth, cellHeight);
 			}
 		}
 	}
@@ -176,4 +185,3 @@ function getHeight(board) {
 function getWidth(board) {
 	return board.length;
 }
-
